@@ -1,10 +1,12 @@
-import { describe } from "node:test";
-import { UserService } from "./UserService.js";
+import { UserService, type User } from "./UserService.js";
 
 describe('UserService', () => {
-    const userService = new UserService();
+    const mockDb: User[] = []
+    const userService = new UserService(mockDb);
     
     it('Deve adicionar um novo Usuário', () => {
-        userService.creatUser()
+        const mockConsole = jest.spyOn(global.console, 'log')
+        userService.creatUser('julio', 'julio@test.com');
+        expect(mockConsole).toHaveBeenCalled()
     })
 })
