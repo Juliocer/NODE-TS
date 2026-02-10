@@ -10,7 +10,7 @@ export class UserController {
         this.userService = userService
     }
 
-    createUser = () => (request: Request, response: Response) => {
+    createUser = (request: Request, response: Response) => {
         const user = request.body
 
         if(!user.name){
