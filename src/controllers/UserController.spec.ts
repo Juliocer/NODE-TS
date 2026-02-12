@@ -1,53 +1,43 @@
-import { json } from "node:stream/consumers";
+import { makeMockResponse } from "../__mocks__/mockResponse.mock";
 import { UserService } from "../services/UserService";
 import { UserController } from "./UserController";
-import {Params} from 'express-serve-static-core'
-import { Request, Response } from "express-serve-static-core";
+import { Request } from "express";
 
-type MockResponse<TResult> = Response & {
-    state: {
-        status?: number,
-        json?: TResult | unknown
-    }
-}
 
 describe('UserController', () => {
-    const mockUserService: Partial<UserService> = {}
+    const mockUserService: Partial<UserService> = {
+        creatUser: jest.fn(),
+        deleteUser: jest.fn(),
+        getAllUsers: jest.fn().mockReturnValue([])
+    }
 
     const userController = new UserController(mockUserService as UserService);
 
-    const mackMockRequest = ({ params, query }: { params?: Params, query?: Params }): Request => {
-        const request = {
-            params: params || { },
-            query: query || { }
-        } as unknown
+    it.each([
+        { body: { name: 'Julio', email: 'julio@gmail.com' }, expectedStatus: 201, expectedMessage: 'Usuário criado' },
+        { body: { email: 'julio@test.com' }, expectedStatus: 400, expectedMessage: 'Bad request! Name é obrigatório' },
+        { body: { name: 'Julio' }, expectedStatus: 400, expectedMessage: 'Bad request! Email é obrigatório' },
+    ])('Deve retornar status $expectedStatus ao criar usuário', ({ body, expectedStatus, expectedMessage }) => {
+        const mockRequest = { body } as Request;
 
-        return request as Request
-    }
+        const mockResponse = makeMockResponse() 
+        userController.createUser(mockRequest, mockResponse)
+        expect(mockResponse.state.status).toBe(expectedStatus)
+        expect(mockResponse.state.json).toMatchObject({message: expectedMessage})
+    })
 
-    function makeMockResponse<TResult> () {
-        const response = {
-            state: {}
-        } as MockResponse<TResult>
+    it('Deve deletar um usuário', () => {
+        const mockRequest = {
+            body:{
+                name: 'Julio',
+                email: 'julio@test.com'
+            }
+        } as Request;
 
-        response.status = (status: number) => {
-            response.state.status = status
-            return response
-        }
-
-        response.json = (json: TResult) => {
-            response.state.json = json
-            return response
-        }
-
-        return response
-    }
-
-
-    it('Deve adicionar um novo usuário', () => {
-        const mockRequest = mackMockRequest({})
         const mockResponse = makeMockResponse()
-        const response = userController.createUser(mockRequest, mockResponse)
+        userController.deleteUser(mockRequest, mockResponse)
+        expect(mockResponse.state.status).toBe(200)
+        expect(mockResponse.state.json).toMatchObject({message: 'Usuário deletado'})
     })
 
 })

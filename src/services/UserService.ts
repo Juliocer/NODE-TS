@@ -32,4 +32,19 @@ export class UserService {
     getAllUsers = () => {
         return this.db
     }
+
+    deleteUser = (name: string, email: string) => {
+        const user = {
+            name,
+            email
+        }
+
+        const found = this.db.find(u => u.name === user.name && u.email === user.email)
+
+        if (!found) return null
+
+        this.db = this.db.filter(u => u.name !== user.name || u.email !== user.email)
+
+        return found
+    }
 }
