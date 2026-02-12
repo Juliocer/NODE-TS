@@ -34,16 +34,14 @@ export class UserService {
     }
 
     deleteUser = (name: string, email: string) => {
-        const user = {
-            name,
-            email
-        }
+        const user = { name, email }
 
         const found = this.db.find(u => u.name === user.name && u.email === user.email)
 
         if (!found) return null
 
-        this.db = this.db.filter(u => u.name !== user.name || u.email !== user.email)
+        const index = this.db.findIndex(u => u.name === user.name && u.email === user.email)
+        this.db.splice(index, 1)
 
         return found
     }

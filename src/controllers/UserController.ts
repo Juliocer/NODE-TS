@@ -14,7 +14,7 @@ export class UserController {
         const { name, email } = request.body
 
         if (!name) {
-            return response.status(400).json({ message: 'Bad request: name invalid' })
+            return response.status(400).json({ message: 'Bad request! Name é obrigatório' })
         }
 
         if (!email) {
