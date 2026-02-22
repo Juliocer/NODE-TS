@@ -16,7 +16,7 @@ jest.mock('../services/UserService.js', () => {
     }
 })
 
-describe('UserController - deleteUser', () => {
+describe('UserController', () => {
     const userController = new UserController();
 
     it.each([
@@ -32,18 +32,6 @@ describe('UserController - deleteUser', () => {
         expect(mockResponse.state.status).toBe(expectedStatus)
         expect(mockResponse.state.json).toMatchObject({ message: expectedMessage })
     })
-
-    it('Deve retornar erro caso o Usuario não preencher os campos', () => {
-        const mockRequest = {
-            body: {}
-        } as Request
-
-        const mockResponse = makeMockResponse();
-
-        userController.createUser(mockRequest, mockResponse);
-        expect(mockResponse.state.status).toBe(400)
-        expect(mockResponse.state.json).toMatchObject({ message: 'Bad request! Todos os campos são obrigatórios' })
-    }) 
 
     it('Deve retornar status 200 ao deletar usuário com sucesso', async () => {
         const mockRequest = {
