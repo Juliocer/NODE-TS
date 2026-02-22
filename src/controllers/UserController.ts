@@ -11,7 +11,7 @@ export class UserController {
     }
 
     createUser = (request: Request, response: Response) => {
-        const { name, email } = request.body
+        const { name, email, password } = request.body
 
         if (!name) {
             return response.status(400).json({ message: 'Bad request! Name é obrigatório' })
@@ -20,25 +20,48 @@ export class UserController {
         if (!email) {
             return response.status(400).json({ message: 'Bad request! Email é obrigatório' })
         }
+        
+        if (!password) {
+            return response.status(400).json({ message: 'Bad request! Senha é obrigatório' })
+        }
 
-        this.userService.creatUser(name, email)
+        if (!name || !email || !password) {
+            return response.status(400).json({ message: 'Bad request! Todos os campos são obrigatórios' })
+        }
+
+        this.userService.createUser(name, email, password)
         return response.status(201).json({ message: 'Usuário criado' })
 
     }
 
-    getAllUsers = (request: Request, response: Response) => {
-        const users = this.userService.getAllUsers()
+    getUsers = (request: Request, response: Response) => {
+        const {id_user} = request.body
+
+        const users = this.userService.getUser( id_user)
         return response.status(200).json(users)
     }
 
-    deleteUser = (request: Request, response: Response) => {
-        const user = request.body
+    getAllUsers = async (request: Request, response: Response) => {
+        try {
+            const users = await this.userService.getAllUsers();
+            return response.status(200).json(users);
+        } catch (error) {
+            return response.status(500).json({ message: 'Erro ao buscar usuários' })
+        }
+    }
 
-        if (!user.name && !user.email) {
-            return response.status(400).json({ message: 'Bad request: name invalid' })
-        } else {
-            this.userService.deleteUser(user.name, user.email)
-            return response.status(200).json({ message: 'Usuário deletado' })
+    deleteUser = async (request: Request, response: Response) => {
+        const { id_user } = request.body
+
+        if (!id_user) {
+            return response.status(400).json({ message: 'Bad request: ID é obrigatório' })
+        }
+
+        try {
+            await this.userService.deleteUser(id_user);
+            return response.status(200).json({ message: 'Usuário deletado' });
+        } catch (error) {
+            return response.status(500).json({ message: 'Erro ao deletar usuário' });
         }
     }
 }
