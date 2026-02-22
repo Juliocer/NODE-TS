@@ -1,12 +1,12 @@
 import { makeMockResponse } from "../__mocks__/mockResponse.mock";
-import { UserService } from "../services/UserService";
 import { UserController } from "./UserController";
 import { Request } from "express";
 
 const mockUserService = {
     createUser: jest.fn(),
-    getAllUsers: jest.fn(),
-    deleteUser: jest.fn()
+    getUser: jest.fn(),
+    deleteUser: jest.fn(),
+    getAllUsers: jest.fn()
 }
 
 jest.mock('../services/UserService.js', () => {
@@ -34,7 +34,58 @@ describe('UserController', () => {
         expect(mockResponse.state.json).toMatchObject({ message: expectedMessage })
     })
 
-    describe('getAllusers', () => {
+    describe('getUsers', () => {
+        it('Deve retornar status 200 e o usuário encontrado', async () => {
+            const mockUser = { id_user: '12345', name: 'Julio', email: 'julio@gmail.com', password: '123456' }
+            
+            mockUserService.getUser = jest.fn().mockReturnValue(mockUser)
+
+            const mockRequest = { body: { id_user: '12345' } } as Request
+            const mockResponse = makeMockResponse()
+
+            await userController.getUsers(mockRequest, mockResponse)
+
+            expect(mockUserService.getUser).toHaveBeenCalledWith('12345')
+            expect(mockResponse.state.status).toBe(200)
+            expect(mockResponse.state.json).toMatchObject(mockUser)
+        })
+
+        it ('Deve retornar status 400 quando o id_user não for informado', async () => {
+            const mockRequest = { body: {} } as Request
+            const mockResponse = makeMockResponse()
+
+            await userController.getUsers(mockRequest, mockResponse)
+
+            expect(mockResponse.state.status).toBe(400)
+            expect(mockResponse.state.json).toMatchObject({ message: 'Bad request: ID é Obrigatório' })
+        })
+
+        it ('Deve retornar status 404 qaund o usuário não for encontrado', async () => {
+            mockUserService.getUser = jest.fn().mockResolvedValue(null)
+
+            const mockRequest = { body: { id_user: 'id-inexistente' } } as Request
+            const mockResponse = makeMockResponse()
+
+            await userController.getUsers(mockRequest, mockResponse)
+
+            expect(mockResponse.state.status).toBe(404)
+            expect(mockResponse.state.json).toMatchObject({ message: 'Usuário não encontrado' })
+        })
+
+        it ('Deve retornar status 500 quando ocorrer um erro', async () => {
+            mockUserService.getUser = jest.fn().mockRejectedValue(new Error('Erro no banco'))
+
+            const mockRequest = { body: { id_user: '12345' } } as Request
+            const mockResponse = makeMockResponse()
+
+            await userController.getUsers(mockRequest, mockResponse)
+
+            expect(mockResponse.state.status).toBe(500)
+            expect(mockResponse.state.json).toMatchObject({ message: 'Erro ao buscar usuário' })
+        })
+    })
+
+    describe('getAllUsers', () => {
         it('Deve retornar 200 e lista de usuários com sucesso', async () => {
             const mockUsers = [
                 { id_user: '1', name: 'Julio', email: 'julio@gmail.com', password: '123456' },

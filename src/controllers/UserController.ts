@@ -30,11 +30,23 @@ export class UserController {
 
     }
 
-    getUsers = (request: Request, response: Response) => {
+    getUsers = async (request: Request, response: Response) => {
         const {id_user} = request.body
 
-        const users = this.userService.getUser( id_user)
-        return response.status(200).json(users)
+        if(!id_user){
+            return response.status(400).json({ message: 'Bad request: ID é Obrigatório' })
+        }
+
+        try {
+            const user = await this.userService.getUser(id_user)
+
+            if (!user) {
+                return response.status(404).json({ message: 'Usuário não encontrado' })
+            }
+            return response.status(200).json(user)
+        } catch (error) {
+            return response.status(500).json({ message: 'Erro ao buscar usuário' })
+        }
     }
 
     getAllUsers = async (request: Request, response: Response) => {
