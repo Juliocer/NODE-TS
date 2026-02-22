@@ -60,7 +60,7 @@ describe('UserController', () => {
             expect(mockResponse.state.json).toMatchObject({ message: 'Bad request: ID é Obrigatório' })
         })
 
-        it ('Deve retornar status 404 qaund o usuário não for encontrado', async () => {
+        it ('Deve retornar status 404 quando o usuário não for encontrado', async () => {
             mockUserService.getUser = jest.fn().mockResolvedValue(null)
 
             const mockRequest = { body: { id_user: 'id-inexistente' } } as Request
@@ -143,7 +143,7 @@ describe('UserController', () => {
             await userController.deleteUser(mockRequest, mockResponse);
 
             expect(mockResponse.state.status).toBe(400);
-            expect(mockResponse.state.json).toMatchObject({ message: 'Bad request: ID é obrigatório' })
+            expect(mockResponse.state.json).toMatchObject({ message: 'Bad request: ID é Obrigatório' })
         })
 
         it('Deve retornar status 500 quando ocorrer um erro ao deletar', async () => {

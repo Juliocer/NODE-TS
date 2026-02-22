@@ -62,7 +62,7 @@ export class UserController {
         const { id_user } = request.body
 
         if (!id_user) {
-            return response.status(400).json({ message: 'Bad request: ID é obrigatório' })
+            return response.status(400).json({ message: 'Bad request: ID é Obrigatório' })
         }
 
         try {
