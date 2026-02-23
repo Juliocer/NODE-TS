@@ -49,6 +49,8 @@ describe('UserRepository', () => {
     })
 
     it('Deve retornar um usuário pelo nome e email', async () => {
+        managerMock.findOne = jest.fn().mockResolvedValue(mockUser)
+
         const response = await userRepository.getUser('test','test@dio.com')
         expect(managerMock.findOne).toHaveBeenCalledWith(User, {
             where: { name: 'test', email: 'test@dio.com' }

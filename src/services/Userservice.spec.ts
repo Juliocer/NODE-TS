@@ -16,7 +16,9 @@ describe('UserService', () => {
     it('Deve adicionar um novo Usuário', async () => {
         const mockUser = { id_user: '123456', name: 'julio', email: 'julio@test.com', password: '12345' }
 
+        mockUserRepository.getUserByEmail.mockResolvedValue(null)
         mockUserRepository.createUser = jest.fn().mockImplementation(() => Promise.resolve(mockUser))
+
         const response = await userService.createUser('julio', 'julio@test.com', '123456');
         expect(mockUserRepository.createUser).toHaveBeenCalled()
         expect(response).toMatchObject(mockUser)

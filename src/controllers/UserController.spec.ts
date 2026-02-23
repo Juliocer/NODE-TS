@@ -147,7 +147,7 @@ describe('UserController', () => {
     describe('deleteUser', () => {
 
         it('Deve retornar status 200 ao deletar usuário com sucesso', async () => {
-            mockUserService.deleteUser = jest.fn().mockRejectedValue(undefined)
+            mockUserService.deleteUser = jest.fn().mockResolvedValue(undefined)
 
             const mockRequest = { body: { name: 'Julio', email: 'julio@gmail.com' } } as Request
             const mockResponse = makeMockResponse();
@@ -166,7 +166,7 @@ describe('UserController', () => {
             await userController.deleteUser(mockRequest, mockResponse);
 
             expect(mockResponse.state.status).toBe(400);
-            expect(mockResponse.state.json).toMatchObject({ message: 'Bad request: Nome e Email são Obrigatório' })
+            expect(mockResponse.state.json).toMatchObject({ message: 'Bad request: Name e Email são Obrigatórios' })
         })
 
         it('Deve retornar status 404 quando o usuário não for encontrado', async () => {
