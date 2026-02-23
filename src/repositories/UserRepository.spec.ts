@@ -13,10 +13,11 @@ describe('UserRepository', () => {
         email: 'test@dio.com',
         password: 'password'
     }
-
+    
     beforeAll(async () => {
         managerMock = await getMockEntityManager({
-            saveReturn: mockUser
+            saveReturn: mockUser,
+            findOneReturn: mockUser
         })
         userRepository = new UserRepository(managerMock as EntityManager)
     })
@@ -25,6 +26,30 @@ describe('UserRepository', () => {
         const response = await userRepository.createUser(mockUser)
         expect(managerMock.save).toHaveBeenCalled()
         expect(response).toMatchObject(mockUser)
+    })
+
+    it('Deve retorna um usuário pelo ID', async () => {
+        const response = await userRepository.getUser('12345')
+        expect(managerMock.findOne).toHaveBeenCalledWith(User, {
+            where: { id_user: '12345' }
+        })
+        expect(response).toMatchObject(mockUser)
+    })
+
+    it('Deve retorna null se o usuário não for encontrado', async () => {
+        managerMock.findOne = jest.fn().mockResolvedValue(null)
+
+        const response = await userRepository.getUser('id-inexistente')
+        expect(response).toBeNull()
+    })
+
+    it('Deve retornar todos os usuários', async () => {
+        const mockUsers = [mockUser, { ...mockUser, id_user: '67890', name: 'Other User'}]
+        managerMock.find = jest.fn().mockResolvedValue(mockUsers)
+
+        const response = await userRepository.getAllUsers()
+        expect(managerMock.find).toHaveBeenCalledWith(User)
+        expect(response).toMatchObject(mockUsers)
     })
 
     it('Deve chamar o método delete com o ID correto', async () => {
