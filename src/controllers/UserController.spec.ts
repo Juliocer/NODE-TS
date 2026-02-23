@@ -20,53 +20,80 @@ jest.mock('../services/UserService.js', () => {
 describe('UserController', () => {
     const userController = new UserController();
 
-    it.each([
-        { body: { name: 'Julio', email: 'julio@gmail.com', password: '123456' }, expectedStatus: 201, expectedMessage: 'Usuário criado' },
-        { body: { email: 'julio@test.com', password: '123456' }, expectedStatus: 400, expectedMessage: 'Bad request! Name é obrigatório' },
-        { body: { name: 'Julio', password: '123456' }, expectedStatus: 400, expectedMessage: 'Bad request! Email é obrigatório' },
-        { body: { name: 'Julio', email: 'julio@gmail.com' }, expectedStatus: 400, expectedMessage: 'Bad request! Senha é obrigatório' },
-    ])('Deve retornar status $expectedStatus ao criar usuário', ({ body, expectedStatus, expectedMessage }) => {
-        const mockRequest = { body } as Request;
+    describe ('createUser', () => {
+        it.each([
+            { body: { name: 'Julio', email: 'julio@gmail.com', password: '123456' }, expectedStatus: 201, expectedMessage: 'Usuário criado' },
+            { body: { email: 'julio@test.com', password: '123456' }, expectedStatus: 400, expectedMessage: 'Bad request! Name é obrigatório' },
+            { body: { name: 'Julio', password: '123456' }, expectedStatus: 400, expectedMessage: 'Bad request! Email é obrigatório' },
+            { body: { name: 'Julio', email: 'julio@gmail.com' }, expectedStatus: 400, expectedMessage: 'Bad request! Senha é obrigatório' },
+        ])('Deve retornar status $expectedStatus ao criar usuário', async ({ body, expectedStatus, expectedMessage }) => {
+            const mockRequest = { body } as Request;
+            const mockResponse = makeMockResponse()
+    
+            await userController.createUser(mockRequest, mockResponse)
+            expect(mockResponse.state.status).toBe(expectedStatus)
+            expect(mockResponse.state.json).toMatchObject({ message: expectedMessage })
+        })
 
-        const mockResponse = makeMockResponse()
-        userController.createUser(mockRequest, mockResponse)
-        expect(mockResponse.state.status).toBe(expectedStatus)
-        expect(mockResponse.state.json).toMatchObject({ message: expectedMessage })
+        it('Deve retornar status 409 quando o email já estiver cadastrado', async () => {
+            mockUserService.createUser = jest.fn().mockRejectedValue(new Error('Email já cadastrado'))
+
+            const mockRequest = { body: { name: 'Julio', email: 'julio@gmail.com', password: '123456'} } as Request
+            const mockResponse = makeMockResponse()
+
+            await userController.createUser(mockRequest, mockResponse)
+
+            expect(mockResponse.state.status).toBe(409)
+            expect(mockResponse.state.json).toMatchObject({ message: 'Email já cadastrado' })
+        })
+
+        it('Deve retornar status 500 quando ocorrer um erro ao criar usuário', async () => {
+            mockUserService.createUser = jest.fn().mockRejectedValue(new Error('Error inesperado'))
+
+            const mockRequest = { body: { name: 'Julio', email: 'julio@gmail.com', password: '123456' } } as Request
+            const mockResponse = makeMockResponse()
+
+            await userController.createUser(mockRequest, mockResponse)
+
+            expect(mockResponse.state.status).toBe(500)
+            expect(mockResponse.state.json).toMatchObject({ message: 'Erro ao criar usuário' })
+        })
+
     })
 
-    describe('getUsers', () => {
+    describe('getUser', () => {
         it('Deve retornar status 200 e o usuário encontrado', async () => {
             const mockUser = { id_user: '12345', name: 'Julio', email: 'julio@gmail.com', password: '123456' }
             
             mockUserService.getUser = jest.fn().mockReturnValue(mockUser)
 
-            const mockRequest = { body: { id_user: '12345' } } as Request
+            const mockRequest = { body: { name: 'Julio', email: 'julio@gmail.com' } } as Request
             const mockResponse = makeMockResponse()
 
-            await userController.getUsers(mockRequest, mockResponse)
+            await userController.getUser(mockRequest, mockResponse)
 
-            expect(mockUserService.getUser).toHaveBeenCalledWith('12345')
+            expect(mockUserService.getUser).toHaveBeenCalledWith('Julio', 'julio@gmail.com')
             expect(mockResponse.state.status).toBe(200)
             expect(mockResponse.state.json).toMatchObject(mockUser)
         })
 
-        it ('Deve retornar status 400 quando o id_user não for informado', async () => {
+        it ('Deve retornar status 400 quando o name e email não forem informados', async () => {
             const mockRequest = { body: {} } as Request
             const mockResponse = makeMockResponse()
 
-            await userController.getUsers(mockRequest, mockResponse)
+            await userController.getUser(mockRequest, mockResponse)
 
             expect(mockResponse.state.status).toBe(400)
-            expect(mockResponse.state.json).toMatchObject({ message: 'Bad request: ID é Obrigatório' })
+            expect(mockResponse.state.json).toMatchObject({ message: 'Bad request: Nome e Email são obrigatórios' })
         })
 
         it ('Deve retornar status 404 quando o usuário não for encontrado', async () => {
             mockUserService.getUser = jest.fn().mockResolvedValue(null)
 
-            const mockRequest = { body: { id_user: 'id-inexistente' } } as Request
+            const mockRequest = { body: { name: 'Julio', email: 'julio@gmail.com' } } as Request
             const mockResponse = makeMockResponse()
 
-            await userController.getUsers(mockRequest, mockResponse)
+            await userController.getUser(mockRequest, mockResponse)
 
             expect(mockResponse.state.status).toBe(404)
             expect(mockResponse.state.json).toMatchObject({ message: 'Usuário não encontrado' })
@@ -75,10 +102,10 @@ describe('UserController', () => {
         it ('Deve retornar status 500 quando ocorrer um erro', async () => {
             mockUserService.getUser = jest.fn().mockRejectedValue(new Error('Erro no banco'))
 
-            const mockRequest = { body: { id_user: '12345' } } as Request
+            const mockRequest = { body: { name: 'Julio', email: 'julio@gmail.com' } } as Request
             const mockResponse = makeMockResponse()
 
-            await userController.getUsers(mockRequest, mockResponse)
+            await userController.getUser(mockRequest, mockResponse)
 
             expect(mockResponse.state.status).toBe(500)
             expect(mockResponse.state.json).toMatchObject({ message: 'Erro ao buscar usuário' })
@@ -120,39 +147,44 @@ describe('UserController', () => {
     describe('deleteUser', () => {
 
         it('Deve retornar status 200 ao deletar usuário com sucesso', async () => {
-            const mockRequest = {
-                body: { id_user: '12345' }
-            } as Request
+            mockUserService.deleteUser = jest.fn().mockRejectedValue(undefined)
 
+            const mockRequest = { body: { name: 'Julio', email: 'julio@gmail.com' } } as Request
             const mockResponse = makeMockResponse();
 
             await userController.deleteUser(mockRequest, mockResponse);
 
+            expect(mockUserService.deleteUser).toHaveBeenCalledWith('Julio', 'julio@gmail.com');
             expect(mockResponse.state.status).toBe(200);
             expect(mockResponse.state.json).toMatchObject({ message: 'Usuário deletado' });
-            expect(mockUserService.deleteUser).toHaveBeenCalledWith('12345');
         });
 
-        it('Deve retornar status 400 quando o id_user não for informado', async () => {
-            const mockRequest = {
-                body: {}
-            } as Request
-
+        it('Deve retornar status 400 quando o name e email não for informados', async () => {
+            const mockRequest = { body: {} } as Request
             const mockResponse = makeMockResponse();
 
             await userController.deleteUser(mockRequest, mockResponse);
 
             expect(mockResponse.state.status).toBe(400);
-            expect(mockResponse.state.json).toMatchObject({ message: 'Bad request: ID é Obrigatório' })
+            expect(mockResponse.state.json).toMatchObject({ message: 'Bad request: Nome e Email são Obrigatório' })
+        })
+
+        it('Deve retornar status 404 quando o usuário não for encontrado', async () => {
+            mockUserService.deleteUser = jest.fn().mockRejectedValue(new Error('Usuário não encontrado'))
+
+            const mockRequest = { body: { name: 'Julio', email: 'julio@gmail.com', password: '123456' } } as Request
+            const mockResponse = makeMockResponse()
+
+            await userController.deleteUser(mockRequest, mockResponse)
+
+            expect(mockResponse.state.status).toBe(404)
+            expect(mockResponse.state.json).toMatchObject({ message: 'Usuário não encontrado' })
         })
 
         it('Deve retornar status 500 quando ocorrer um erro ao deletar', async () => {
             mockUserService.deleteUser = jest.fn().mockRejectedValue(new Error('Erro no banco'))
 
-            const mockRequest = {
-                body: { id_user: '12345' }
-            } as Request
-
+            const mockRequest = { body: { name: 'Julio', email: 'julio@gmail.com' } } as Request
             const mockResponse = makeMockResponse();
 
             await userController.deleteUser(mockRequest, mockResponse)

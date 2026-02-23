@@ -1,9 +1,12 @@
+import { AppDataSource } from "../database/index.js";
 import { UserService } from "./UserService.js";
 
 jest.mock('../repositories/UserRepository')
-jest.mock('../database', () => {
-    intialize: jest.fn()
-})
+jest.mock('../database', () => ({
+    AppDataSource: {
+        manager: {}
+    }
+}))
 
 const mockUserRepository = require('../repositories/UserRepository')
 
@@ -19,18 +22,26 @@ describe('UserService', () => {
         expect(response).toMatchObject(mockUser)
     })
 
+    it('Deve lançar erro quando o email já estiver cadastrado', async () =>{
+        const mockUser = { id_user: '123456', name: 'julio', email: 'julio@test.com', password: '12345' }
+
+        mockUserRepository.getUserByEmail.mockResolvedValue(mockUser)
+
+        await expect(userService.createUser('julio', 'julio@test.com', '123456')).rejects.toThrow('Email já cadastrado')
+    })
+
     it('Deve retornar um usuário existente', async () => {
         const mockUser = { id_user: '123456', name: 'julio', email: 'julio@test.com', password: '12345' }
 
         mockUserRepository.getUser = jest.fn().mockImplementation(() => Promise.resolve(mockUser))
-        const response = await userService.getUser('123456')
+        const response = await userService.getUser('julio', 'julio@test.com')
         expect(mockUserRepository.getUser).toHaveBeenCalled()
         expect(response).toMatchObject(mockUser)
     })
 
     it('Deve retornar null quando o usuário não for encontrado', async () => {
         mockUserRepository.getUser = jest.fn().mockImplementation(() => Promise.resolve(null))
-        const response = await userService.getUser('id-inexistente')
+        const response = await userService.getUser('inexistente', 'inexistente')
         expect(mockUserRepository.getUser).toHaveBeenCalled()
         expect(response).toBeNull()
     })
@@ -48,11 +59,19 @@ describe('UserService', () => {
     })
 
     it('Deve deletar um usuário existente', async () => {
-        mockUserRepository.deleteUser = jest.fn().mockResolvedValue(undefined);
-        
-        const userId = '123456';
-        await userService.deleteUser(userId);
+        const mockUser = { id_user: '123456', name: 'julio', email: 'julio@test.com', password: '12345' }
 
-        expect(mockUserRepository.deleteUser).toHaveBeenCalledWith(userId);
+        mockUserRepository.getUser.mockResolvedValue(mockUser)
+        mockUserRepository.deleteUser = jest.fn().mockResolvedValue(undefined);
+
+        await userService.deleteUser('julio', 'julio@test.com');
+
+        expect(mockUserRepository.getUser).toHaveBeenCalledWith('julio', 'julio@test.com');
+        expect(mockUserRepository.deleteUser).toHaveBeenCalledWith('123456')
+    })
+
+    it('Deve lançar erro ao deletar usuário inexistente', async () => {
+        mockUserRepository.getUser.mockResolvedValue(null)
+        await expect(userService.deleteUser('inexistente', 'inexistente@test.com')).rejects.toThrow('Usuário não encontrado')
     })
 })

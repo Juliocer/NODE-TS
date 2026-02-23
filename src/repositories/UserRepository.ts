@@ -14,10 +14,19 @@ export class UserRepository {
         return this.manager.save(user)
     }
 
-    getUser = async (userId: string): Promise<User | null> => {
+    getUserByEmail = async (email: string): Promise<User | null> => {
         return this.manager.findOne(User, {
             where: {
-                id_user: userId
+                email
+            }
+        })
+    }
+
+    getUser = async (name: string, email: string): Promise<User | null> => {
+        return this.manager.findOne(User, {
+            where: {
+                name,
+                email
             }
         })
     }
