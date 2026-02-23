@@ -13,7 +13,7 @@ describe('UserRepository', () => {
         email: 'test@dio.com',
         password: 'password'
     }
-    
+
     beforeAll(async () => {
         managerMock = await getMockEntityManager({
             saveReturn: mockUser,
@@ -28,7 +28,7 @@ describe('UserRepository', () => {
         expect(response).toMatchObject(mockUser)
     })
 
-    it('Deve retorna um usuário pelo ID', async () => {
+    it('Deve retornar um usuário pelo ID', async () => {
         const response = await userRepository.getUser('12345')
         expect(managerMock.findOne).toHaveBeenCalledWith(User, {
             where: { id_user: '12345' }
@@ -36,7 +36,7 @@ describe('UserRepository', () => {
         expect(response).toMatchObject(mockUser)
     })
 
-    it('Deve retorna null se o usuário não for encontrado', async () => {
+    it('Deve retornar null se o usuário não for encontrado', async () => {
         managerMock.findOne = jest.fn().mockResolvedValue(null)
 
         const response = await userRepository.getUser('id-inexistente')
