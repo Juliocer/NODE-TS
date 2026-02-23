@@ -166,7 +166,7 @@ describe('UserController', () => {
             await userController.deleteUser(mockRequest, mockResponse);
 
             expect(mockResponse.state.status).toBe(400);
-            expect(mockResponse.state.json).toMatchObject({ message: 'Bad request: Name e Email são Obrigatórios' })
+            expect(mockResponse.state.json).toMatchObject({ message: 'Bad request: Name e Email são obrigatórios' })
         })
 
         it('Deve retornar status 404 quando o usuário não for encontrado', async () => {

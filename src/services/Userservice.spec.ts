@@ -1,4 +1,5 @@
 import { AppDataSource } from "../database/index.js";
+import { UserRepository } from "../repositories/UserRepository.js";
 import { UserService } from "./UserService.js";
 
 jest.mock('../repositories/UserRepository')
@@ -8,10 +9,16 @@ jest.mock('../database', () => ({
     }
 }))
 
-const mockUserRepository = require('../repositories/UserRepository')
+const mockUserRepository = {
+    createUser: jest.fn(),
+    getUserByEmail: jest.fn(),
+    getUser: jest.fn(),
+    getAllUsers: jest.fn(),
+    deleteUser: jest.fn()
+}
 
 describe('UserService', () => {
-    const userService = new UserService(mockUserRepository)
+    const userService = new UserService(mockUserRepository as unknown as UserRepository)
 
     it('Deve adicionar um novo Usuário', async () => {
         const mockUser = { id_user: '123456', name: 'julio', email: 'julio@test.com', password: '12345' }
